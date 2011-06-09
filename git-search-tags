@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+def search_for_hash(hash)
+  tags = %x{git tag}.split(/\n/)
+
+  tags.each do | tag |
+    log = %x{git log --pretty=oneline #{tag}}
+    if log.match(hash)
+      puts "hash #{hash} found in tag #{tag}"
+    end
+  end
+end
+
+ARGV.each { |v| search_for_hash(v) }
