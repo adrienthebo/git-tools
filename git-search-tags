@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# Simple script to see what tags contain a specific commit.
+# Convenient for seeing what release a particular feature/bugfix was released in.
 
 def search_for_commit(commit)
   %x{git show #{commit}}
