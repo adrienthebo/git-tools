@@ -17,9 +17,15 @@ def search_for_commit(commit)
   end
 end
 
+# Make sure we're inside a git repo. If git branch returns nothing on stdin,
+# get the expletive out of Dodge.
 unless %x{git branch}
   exit 1
 end
-  
+
+if ARGV.any? { |v| v.match(/-h|--help/) }
+  puts "Usage: $0 commit ..."
+  exit 0
+end
 
 ARGV.each { |v| search_for_commit(v) }
