@@ -12,9 +12,11 @@ def search_for_commit(commit)
   tags = %x{git tag}.split(/\n/)
 
   tags.each do | tag |
-    log = %x{git log --pretty="format:%H" #{tag}}
+    log = %x{git log --pretty="format:%H" #{tag} 2>/dev/null}
     if log.match(commit)
       puts "commit #{commit} found in tag #{tag}"
+    else
+      puts "commit #{commit} NOT found in tag #{tag}" if $verbose
     end
   end
 end
@@ -30,4 +32,5 @@ if ARGV.any? { |v| v.match(/-h|--help/) }
   exit 0
 end
 
+$verbose = ARGV.delete("-v")
 ARGV.each { |v| search_for_commit(v) }
