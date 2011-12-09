@@ -11,7 +11,7 @@ def search_for_commit(commit)
 
   tags = %x{git tag}.split(/\n/)
 
-  tags.each do | tag |
+  tags.reverse.each do | tag |
     log = %x{git log --pretty="format:%H" #{tag} 2>/dev/null}
     if log.match(commit)
       puts "commit #{commit} found in tag #{tag}"
