@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+#
+# Erases any number of files from the entirety of a project's history
+
+require 'optparse'
+
+options = {:branches => []}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options] FILE [FILE...]"
+
+  opts.on("--branch=val", 'A branch to filter') do |param|
+    options[:branches] << param
+  end
+
+  opts.on_tail("-h", "--help", "Display this help") do
+    puts opts
+    exit 0
+  end
+end
+
+begin
+  parser.parse!
+rescue => e
+  $stderr.puts e
+  $stderr.puts parser
+  exit 1
+end
+
+if ARGV.length < 1
+  $stderr.puts parser
+  exit 1
+end
+
+puts ARGV
+
+rm_cmd = %{git rm --cached #{ARGV.join(' ')}}
+cmd = %{git filter-branch --prune-empty --index-filter "#{rm_cmd} || true" -- #{options[:branches].join(' ')}}
+
+system cmd
+
+%x{git for-each-ref --format='%(refname)' refs/original}.split('\n').each do |line|
+  %x{git update-ref -d "#{line}"}
+end
