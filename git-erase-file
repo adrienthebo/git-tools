@@ -32,8 +32,6 @@ if ARGV.length < 1
   exit 1
 end
 
-puts ARGV
-
 rm_cmd = %{git rm --cached #{ARGV.join(' ')}}
 cmd = %{git filter-branch --prune-empty --index-filter "#{rm_cmd} || true" -- #{options[:branches].join(' ')}}
 
