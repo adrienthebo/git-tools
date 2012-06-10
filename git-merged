@@ -5,6 +5,7 @@
 require 'optparse'
 
 begin
+  require 'rubygems'
   require 'colorize'
   require 'terminal-table'
 rescue LoadError => e
