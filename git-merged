@@ -2,23 +2,47 @@
 #
 # Given a number of branches, checks if they've been merged into a set of branches
 
+require 'optparse'
+
+begin
+  require 'colorize'
+  require 'terminal-table'
+rescue LoadError => e
+  $stderr.puts "#{File.basename $0} needs the colorize and terminal-table gems, #{e}"
+  exit 126
+end
+
+
+# Given a symbolic reference and a branch, returns whether the symbolic
+# reference has been merged into that branch
 def merged?(symbolic, branch)
   sha1 = %x{git log -1 --pretty="format:%h" #{symbolic}}
-
   contains = %x{git branch --contains #{sha1} | grep #{branch}}
-
   not contains.empty?
 end
 
-require 'optparse'
+def remote_branches
+  output = %x{git branch -r}
+  branches = output.split(/\n/)
+  branches.map! {|line| line.scan(/\S+/).first}
+  branches.delete_if {|branch| branch.match %r[/HEAD$]}
 
-options = {:branches => []}
+  branches
+end
+
+integration_branch = nil
+options = {}
 
 parser = OptionParser.new do |opts|
-  opts.banner = "Usage: #{$0} [options] FILE [FILE...]"
+  opts.banner = "Usage: #{$0} [options]"
 
-  opts.on("--branch=val", 'A branch to filter') do |param|
-    options[:branches] << param
+  opts.on("--branch=val", 'The branch to check for merges') do |param|
+    raise ArgumentError, 'Option "--branch" can only be specified once!' if integration_branch
+    integration_branch = param
+  end
+
+  opts.on('-r', '--remote', 'Check all remote branches') do
+    options[:remote] = true
   end
 
   opts.on_tail("-h", "--help", "Display this help") do
@@ -35,20 +59,29 @@ rescue => e
   exit 1
 end
 
-if ARGV.length < 1
-  $stderr.puts parser
-  exit 1
+if integration_branch.nil? or integration_branch.empty?
+  integration_branch = 'master'
 end
 
-if options[:branches].empty?
-  options[:branches] << 'master'
+if options[:remote]
+  check_branches = remote_branches
+else
+  check_branches = ARGV
 end
 
+rows = check_branches.map do |branch|
 
-test_branches = ARGV
-
-options[:branches].each do |branch|
-  test_branches.each do |test_branch|
-    puts "Branch #{test_branch} is" + (merged?(test_branch, branch) ? "" : " NOT") + " merged into #{branch}"
+  msg   = nil
+  color = nil
+  if merged? branch, integration_branch
+    msg = "merged"
+    color = :green
+  else
+    msg = "NOT merged"
+    color = :red
   end
+
+  [branch.colorize(color), msg.colorize(color)]
 end
+
+puts Terminal::Table.new :rows => rows
