@@ -84,4 +84,4 @@ rows = check_branches.map do |branch|
   [branch.colorize(color), msg.colorize(color)]
 end
 
-puts Terminal::Table.new :rows => rows
+puts Terminal::Table.new :headings => %w{Branch Status}, :rows => rows
