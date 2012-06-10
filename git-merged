@@ -34,7 +34,7 @@ integration_branch = nil
 options = {}
 
 parser = OptionParser.new do |opts|
-  opts.banner = "Usage: #{$0} [options]"
+  opts.banner = "Usage: #{File.basename $0} [options]"
 
   opts.on("--branch=val", 'The branch to check for merges') do |param|
     raise ArgumentError, 'Option "--branch" can only be specified once!' if integration_branch
