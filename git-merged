@@ -59,6 +59,11 @@ parser = OptionParser.new do |opts|
     options[:local] = true
   end
 
+  opts.on('-a', '--all', 'Check every branch ever') do
+    options[:remote] = true
+    options[:local] = true
+  end
+
   opts.on_tail("-h", "--help", "Display this help") do
     puts opts
     exit 0
