@@ -31,6 +31,15 @@ def remote_branches
   branches
 end
 
+def local_branches
+  output = %x{git branch}
+  branches = output.split(/\n/)
+  branches.map! {|line| line.sub(/\*/, '').strip}
+
+  branches
+end
+
+check_branches = []
 integration_branch = nil
 options = {}
 
@@ -44,6 +53,10 @@ parser = OptionParser.new do |opts|
 
   opts.on('-r', '--remote', 'Check all remote branches') do
     options[:remote] = true
+  end
+
+  opts.on('-l', '--local', 'Check all local branches') do
+    options[:local] = true
   end
 
   opts.on_tail("-h", "--help", "Display this help") do
@@ -64,11 +77,10 @@ if integration_branch.nil? or integration_branch.empty?
   integration_branch = 'master'
 end
 
-if options[:remote]
-  check_branches = remote_branches
-else
-  check_branches = ARGV
-end
+check_branches += remote_branches if options[:remote]
+check_branches += local_branches if options[:local]
+
+check_branches.empty? and check_branches = ARGV.dup
 
 rows = check_branches.map do |branch|
 
@@ -82,7 +94,11 @@ rows = check_branches.map do |branch|
     color = :red
   end
 
-  [branch.colorize(color), msg.colorize(color)]
+  # We have to dup this variable because we can't directly modify a variable
+  # that may have been in ARGV
+  colorized_branch = branch.dup.colorize(color)
+  colorized_msg    = msg.colorize(color)
+  [colorized_branch, colorized_msg]
 end
 
 puts Terminal::Table.new :headings => %w{Branch Status}, :rows => rows
