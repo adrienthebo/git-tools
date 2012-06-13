@@ -39,6 +39,16 @@ def local_branches
   branches
 end
 
+def current_branch
+  output = %x{git branch}
+  branches = output.split(/\n/)
+  branch = branches.select {|br| br.match /\*/ }.first
+  branch.sub!(/\*/, '')
+  branch.strip!
+
+  branch
+end
+
 check_branches = []
 integration_branch = nil
 options = {}
@@ -85,7 +95,13 @@ end
 check_branches += remote_branches if options[:remote]
 check_branches += local_branches if options[:local]
 
-check_branches.empty? and check_branches = ARGV.dup
+if check_branches.empty?
+  if ARGV.empty?
+    check_branches << current_branch
+  else
+    check_branches += ARGV
+  end
+end
 
 rows = check_branches.map do |branch|
 
