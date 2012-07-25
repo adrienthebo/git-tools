@@ -1,17 +1,26 @@
 #!/usr/bin/env ruby
 #
-# Given a number of branches, checks if they've been merged into a set of branches
+# See if branches have been merged into an integration branch
+#
+# == Requirements
+#
+# If you don't hate unicorns and like pretty tables, install the terminal-table
+# and colorize gems.
+#
+# == Example:
+#
+#    > git-merged -a                                                                                                                                                            Tue 24 18:52
+#    +----------------------------+------------+
+#    | Branch                     | Status     |
+#    +----------------------------+------------+
+#    | origin/master              | merged     |
+#    | origin/mysqlulz            | NOT merged |
+#    | emrepoe                    | merged     |
+#    | master                     | merged     |
+#    | mysqlulz                   | NOT merged |
+#    +----------------------------+------------+
 
 require 'optparse'
-
-begin
-  require 'rubygems'
-  require 'colorize'
-  require 'terminal-table'
-rescue LoadError => e
-  $stderr.puts "#{File.basename $0} needs the colorize and terminal-table gems, #{e}"
-  exit 126
-end
 
 
 # Given a symbolic reference and a branch, returns whether the symbolic
@@ -42,16 +51,61 @@ end
 def current_branch
   output = %x{git branch}
   branches = output.split(/\n/)
-  branch = branches.select {|br| br.match /\*/ }.first
+  branch = branches.find {|br| br.match /\*/ }
   branch.sub!(/\*/, '')
   branch.strip!
 
   branch
 end
 
+# Ben hates rainbows. I bet he hates unicorns as well.
+def print_table(table)
+
+  pretty_table(table)
+
+rescue LoadError => e
+  plain_table(table)
+end
+
+def pretty_table(table)
+  require 'rubygems'
+  require 'colorize'
+  require 'terminal-table'
+
+  colorized_table = table.map do |branch, status|
+
+    if status == :merged
+      color = :green
+      msg   = 'merged'.colorize(color)
+    else
+      color = :red
+      msg   = 'NOT merged'.colorize(color)
+    end
+
+    [branch.dup.colorize(color), msg]
+  end
+
+  puts Terminal::Table.new :headings => %w{Branch Status}, :rows => colorized_table
+end
+
+def plain_table(table)
+
+  left_spaces = table.map {|pair| pair[0].size}.max + 1
+
+  pretty_table = table.inject("") do |str, (branch, status)|
+    msg = (status == :merged ? 'merged' : 'NOT merged')
+    padding = left_spaces - branch.size
+    str << "#{branch}#{' ' * padding}#{msg}\n"
+
+    str
+  end
+
+  puts pretty_table
+end
+
 check_branches = []
 integration_branch = nil
-options = {}
+options = {:color => true}
 
 parser = OptionParser.new do |opts|
   opts.banner = "Usage: #{File.basename $0} [options]"
@@ -72,6 +126,10 @@ parser = OptionParser.new do |opts|
   opts.on('-a', '--all', 'Check every branch ever') do
     options[:remote] = true
     options[:local] = true
+  end
+
+  opts.on('-c', '--[no-]color', 'Enable color (enabled by default)') do |color|
+    options[:color] = color
   end
 
   opts.on_tail("-h", "--help", "Display this help") do
@@ -103,23 +161,18 @@ if check_branches.empty?
   end
 end
 
+# Generate a 2D array of branch names and their merge status
 rows = check_branches.map do |branch|
 
-  msg   = nil
-  color = nil
   if merged? branch, integration_branch
-    msg = "merged"
-    color = :green
+    [branch, :merged]
   else
-    msg = "NOT merged"
-    color = :red
+    [branch, :unmerged]
   end
-
-  # We have to dup this variable because we can't directly modify a variable
-  # that may have been in ARGV
-  colorized_branch = branch.dup.colorize(color)
-  colorized_msg    = msg.colorize(color)
-  [colorized_branch, colorized_msg]
 end
 
-puts Terminal::Table.new :headings => %w{Branch Status}, :rows => rows
+if options[:color]
+  print_table(rows)
+else
+  plain_table(rows)
+end
