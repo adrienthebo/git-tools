@@ -59,11 +59,12 @@ def current_branch
 end
 
 # Ben hates rainbows. I bet he hates unicorns as well.
-def print_table(table)
+def print_table(table, gem_warning)
 
   pretty_table(table)
 
 rescue LoadError => e
+  puts "Warning: gems 'colorsize' and/or 'terminal-table' not found; ignoring color" if gem_warning
   plain_table(table)
 end
 
@@ -130,6 +131,7 @@ parser = OptionParser.new do |opts|
 
   opts.on('-c', '--[no-]color', 'Enable color (enabled by default)') do |color|
     options[:color] = color
+    options[:gemwarning] = color
   end
 
   opts.on_tail("-h", "--help", "Display this help") do
@@ -172,7 +174,7 @@ rows = check_branches.map do |branch|
 end
 
 if options[:color]
-  print_table(rows)
+  print_table(rows,options[:gemwarning])
 else
   plain_table(rows)
 end
