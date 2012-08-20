@@ -147,7 +147,7 @@ rescue => e
 end
 
 if integration_branch.nil? or integration_branch.empty?
-  integration_branch = 'master'
+  integration_branch = current_branch
 end
 
 check_branches += remote_branches if options[:remote]
