@@ -59,15 +59,15 @@ def current_branch
 end
 
 # Ben hates rainbows. I bet he hates unicorns as well.
-def print_table(table)
+def print_table(table, integration_branch)
 
-  pretty_table(table)
+  pretty_table(table, integration_branch)
 
 rescue LoadError => e
-  plain_table(table)
+  plain_table(table, integration_branch)
 end
 
-def pretty_table(table)
+def pretty_table(table, integration_branch)
   require 'rubygems'
   require 'colorize'
   require 'terminal-table'
@@ -85,10 +85,10 @@ def pretty_table(table)
     [branch.dup.colorize(color), msg]
   end
 
-  puts Terminal::Table.new :headings => %w{Branch Status}, :rows => colorized_table
+  puts Terminal::Table.new :headings => ["Branch", "Status (against #{integration_branch})"], :rows => colorized_table
 end
 
-def plain_table(table)
+def plain_table(table, integration_branch)
 
   left_spaces = table.map {|pair| pair[0].size}.max + 1
 
@@ -99,6 +99,8 @@ def plain_table(table)
 
     str
   end
+
+  pretty_table = "Branch#{' ' * (left_spaces - 5)}Status (against #{integration_branch})\n\n#{pretty_table}"
 
   puts pretty_table
 end
@@ -172,7 +174,7 @@ rows = check_branches.map do |branch|
 end
 
 if options[:color]
-  print_table(rows)
+  print_table(rows, integration_branch)
 else
-  plain_table(rows)
+  plain_table(rows, integration_branch)
 end
