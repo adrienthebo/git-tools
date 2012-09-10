@@ -58,11 +58,16 @@ def current_branch
   branch
 end
 
+# Try to generate a rainbow-riffic table, and fall back to a sad table.
+#
 # Ben hates rainbows. I bet he hates unicorns as well.
+#
+# @param [Array<Array<String>>] table An array of branch pairs, with the name and status
+# @param [String] integration_branch The name of the branch that contains (or doesn't) the checked branches.
+#
+# @return [String] The table, as a string. Yep.
 def print_table(table, integration_branch)
-
   pretty_table(table, integration_branch)
-
 rescue LoadError => e
   plain_table(table, integration_branch)
 end
@@ -85,7 +90,7 @@ def pretty_table(table, integration_branch)
     [branch.dup.colorize(color), msg]
   end
 
-  puts Terminal::Table.new :headings => ["Branch", "Status (against #{integration_branch})"], :rows => colorized_table
+  Terminal::Table.new :headings => ["Branch", "Status (against #{integration_branch})"], :rows => colorized_table
 end
 
 def plain_table(table, integration_branch)
@@ -102,7 +107,7 @@ def plain_table(table, integration_branch)
 
   pretty_table = "Branch#{' ' * (left_spaces - 5)}Status (against #{integration_branch})\n\n#{pretty_table}"
 
-  puts pretty_table
+  pretty_table
 end
 
 check_branches = []
@@ -174,7 +179,9 @@ rows = check_branches.map do |branch|
 end
 
 if options[:color]
-  print_table(rows, integration_branch)
+  tbl = print_table(rows, integration_branch)
 else
-  plain_table(rows, integration_branch)
+  tbl = plain_table(rows, integration_branch)
 end
+
+puts tbl
