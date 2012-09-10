@@ -65,13 +65,19 @@ end
 # @param [Array<Array<String>>] table An array of branch pairs, with the name and status
 # @param [String] integration_branch The name of the branch that contains (or doesn't) the checked branches.
 #
-# @return [String] The table, as a string. Yep.
+# @return [String] The table, as a string.
 def print_table(table, integration_branch)
   pretty_table(table, integration_branch)
 rescue LoadError => e
   plain_table(table, integration_branch)
 end
 
+# Generate a lovely colorized table with happiness and joy.
+#
+# @param [Array<Array<String>>] table An array of branch pairs, with the name and status
+# @param [String] integration_branch The name of the branch that contains (or doesn't) the checked branches.
+#
+# @return [String] The table, as a string.
 def pretty_table(table, integration_branch)
   require 'rubygems'
   require 'colorize'
@@ -93,6 +99,12 @@ def pretty_table(table, integration_branch)
   Terminal::Table.new :headings => ["Branch", "Status (against #{integration_branch})"], :rows => colorized_table
 end
 
+# Generate a plain table white whitespace padding
+#
+# @param [Array<Array<String>>] table An array of branch pairs, with the name and status
+# @param [String] integration_branch The name of the branch that contains (or doesn't) the checked branches.
+#
+# @return [String] The table, as a string.
 def plain_table(table, integration_branch)
 
   left_spaces = table.map {|pair| pair[0].size}.max + 1
