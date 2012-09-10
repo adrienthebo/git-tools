@@ -113,13 +113,12 @@ def plain_table(table, integration_branch)
     msg = (status == :merged ? 'merged' : 'NOT merged')
     padding = left_spaces - branch.size
     str << "#{branch}#{' ' * padding}#{msg}\n"
-
     str
   end
 
-  pretty_table = "Branch#{' ' * (left_spaces - 5)}Status (against #{integration_branch})\n\n#{pretty_table}"
-
-  pretty_table
+  header = "Branch#{' ' * (left_spaces - 5)}Status (against #{integration_branch})"
+  table  = "#{header}\n\n#{pretty_table}"
+  table
 end
 
 check_branches = []
