@@ -22,7 +22,6 @@
 
 require 'optparse'
 
-
 # Given a symbolic reference and a branch, returns whether the symbolic
 # reference has been merged into that branch
 def merged?(symbolic, branch)
@@ -93,7 +92,7 @@ def pretty_table(table, integration_branch)
       msg   = 'NOT merged'.colorize(color)
     end
 
-    [branch.dup.colorize(color), msg]
+    [branch.colorize(color), msg]
   end
 
   Terminal::Table.new :headings => ["Branch", "Status (against #{integration_branch})"], :rows => colorized_table
@@ -121,78 +120,90 @@ def plain_table(table, integration_branch)
   table
 end
 
-check_branches = []
-integration_branch = nil
-options = {:color => true}
+# Parse the program options and generate a hash of that stuff.
+def parse(args)
 
-parser = OptionParser.new do |opts|
-  opts.banner = "Usage: #{File.basename $0} [options]"
+  options = {:color => true}
 
-  opts.on("--branch=val", 'The branch to check for merges') do |param|
-    raise ArgumentError, 'Option "--branch" can only be specified once!' if integration_branch
-    integration_branch = param
+  check_local  = false
+  check_remote = false
+
+  parser = OptionParser.new do |opts|
+    opts.banner = "Usage: #{File.basename $0} [options]"
+
+    opts.on("--branch=val", 'The branch to check for merges') do |param|
+      raise ArgumentError, 'Option "--branch" can only be specified once' if options[:integration_branch]
+      options[:integration_branch] = param
+    end
+
+    opts.on('-r', '--remote', 'Check all remote branches') do
+      check_remote = true
+    end
+
+    opts.on('-l', '--local', 'Check all local branches') do
+      check_local = true
+    end
+
+    opts.on('-a', '--all', 'Check every branch ever') do
+      check_local = check_remote = true
+    end
+
+    opts.on('-c', '--[no-]color', 'Enable color (enabled by default)') do |color|
+      options[:color] = color
+    end
+
+    opts.on_tail("-h", "--help", "Display this help") do
+      puts opts
+      exit 0
+    end
   end
 
-  opts.on('-r', '--remote', 'Check all remote branches') do
-    options[:remote] = true
+  remaining = parser.parse(args)
+
+  # Set default integration branch if needed
+  options[:integration_branch] ||= 'master'
+
+  options[:check_branches] = []
+  if remaining.size > 0
+    # If a list of branches has been given on the command line, those take
+    # precedence.
+    options[:check_branches].concat remaining
+  elsif not(check_remote or check_local)
+    # We don't have a list of branches to check, a set of local or remote
+    # branches has not been displayed. So, display everything!
+    options[:check_branches].concat remote_branches
+    options[:check_branches].concat local_branches
+  else
+    options[:check_branches].concat remote_branches if check_remote
+    options[:check_branches].concat local_branches  if check_local
   end
 
-  opts.on('-l', '--local', 'Check all local branches') do
-    options[:local] = true
-  end
-
-  opts.on('-a', '--all', 'Check every branch ever') do
-    options[:remote] = true
-    options[:local] = true
-  end
-
-  opts.on('-c', '--[no-]color', 'Enable color (enabled by default)') do |color|
-    options[:color] = color
-  end
-
-  opts.on_tail("-h", "--help", "Display this help") do
-    puts opts
-    exit 0
-  end
-end
-
-begin
-  parser.parse!
+  options
 rescue => e
   $stderr.puts e
+  puts e.backtrace
   $stderr.puts parser
   exit 1
 end
 
-if integration_branch.nil? or integration_branch.empty?
-  integration_branch = 'master'
-end
+if __FILE__ == $0
+  opts = parse(ARGV)
 
-check_branches += remote_branches if options[:remote]
-check_branches += local_branches if options[:local]
+  # Generate a 2D array of branch names and their merge status
+  rows = opts[:check_branches].map do |branch|
 
-if check_branches.empty?
-  if ARGV.empty?
-    check_branches << current_branch
-  else
-    check_branches += ARGV
+    if merged? branch, opts[:integration_branch]
+      [branch, :merged]
+    else
+      [branch, :unmerged]
+    end
   end
-end
 
-# Generate a 2D array of branch names and their merge status
-rows = check_branches.map do |branch|
-
-  if merged? branch, integration_branch
-    [branch, :merged]
+  if opts[:color]
+    tbl = print_table(rows, opts[:integration_branch])
   else
-    [branch, :unmerged]
+    tbl = plain_table(rows, opts[:integration_branch])
   end
-end
 
-if options[:color]
-  tbl = print_table(rows, integration_branch)
-else
-  tbl = plain_table(rows, integration_branch)
+  puts tbl
 end
-
-puts tbl
