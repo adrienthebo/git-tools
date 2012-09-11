@@ -123,7 +123,7 @@ end
 # Parse the program options and generate a hash of that stuff.
 def parse(args)
 
-  options = {:color => true}
+  options = {}
 
   check_local  = false
   check_remote = false
@@ -199,9 +199,20 @@ if __FILE__ == $0
     end
   end
 
-  if opts[:color]
+  if opts[:color].nil?
+    # Default value for color used, try pretty mode but silently fall back to plain
     tbl = print_table(rows, opts[:integration_branch])
+  elsif opts[:color]
+    # Color explicitly enabled, try color, fallback to plain and scream
+    # on failure
+    begin
+      tbl = pretty_table(rows, opts[:integration_branch])
+    rescue LoadError => e
+      $stderr.puts "Missing one of the prerequisite gems ['colorize', 'terminal-table'], #{e}"
+      tbl = plain_table(rows, opts[:integration_branch])
+    end
   else
+    # Color explicitly disabled.
     tbl = plain_table(rows, opts[:integration_branch])
   end
 
