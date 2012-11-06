@@ -32,11 +32,10 @@ if ARGV.length < 1
   exit 1
 end
 
-rm_cmd = %{git rm --cached #{ARGV.join(' ')}}
+rm_cmd = %{git rm -r --cached --ignore-unmatch #{ARGV.join(' ')}}
 cmd = %{git filter-branch --prune-empty --index-filter "#{rm_cmd} || true" -- #{options[:branches].join(' ')}}
 
 system cmd
 
-%x{git for-each-ref --format='%(refname)' refs/original}.split('\n').each do |line|
-  %x{git update-ref -d "#{line}"}
-end
+puts %{Backing up .git/refs/original to .git/refs/original-#{Time.now.strftime('%s')}}
+%x{mv .git/refs/original .git/refs/original-#{Time.now.strftime('%s')}}
