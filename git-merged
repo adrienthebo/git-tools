@@ -155,7 +155,7 @@ def parse(args)
     opts.on('-v', '--version', "Display the version of #{File.basename $0}") do
       # This is kind of a silly way to handle versioning, but it'll do for now.
       version = '1.0.0'
-      puts version
+      puts "git-merged #{version}"
     end
 
     opts.on_tail("-h", "--help", "Display this help") do
