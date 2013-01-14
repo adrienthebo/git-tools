@@ -167,7 +167,7 @@ def parse(args)
   remaining = parser.parse(args)
 
   # Set default integration branch if needed
-  options[:integration_branch] ||= 'master'
+  options[:integration_branch] ||= current_branch
 
   options[:check_branches] = []
   if remaining.size > 0
