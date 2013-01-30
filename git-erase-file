@@ -36,7 +36,9 @@ if ARGV.length < 1
   exit 1
 end
 
-rm_cmd = %{echo; git rm -r --cached --ignore-unmatch #{ARGV.join(' ')}}
+files = ARGV.map { |file| "#{file}" }.join(' ')
+
+rm_cmd = %{echo; git rm -r --cached --ignore-unmatch #{files}}
 cmd = %{git filter-branch --prune-empty --index-filter "#{rm_cmd} || true" -- #{options[:branches].join(' ')}}
 
 puts "Executing #{rm_cmd.inspect} for each commit" if options[:verbose]
