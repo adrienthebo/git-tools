@@ -36,7 +36,7 @@ if ARGV.length < 1
   exit 1
 end
 
-files = ARGV.map { |file| "#{file}" }.join(' ')
+files = ARGV.map { |file| "'#{file}'" }.join(' ')
 
 rm_cmd = %{echo; git rm -r --cached --ignore-unmatch #{files}}
 cmd = %{git filter-branch --prune-empty --index-filter "#{rm_cmd} || true" -- #{options[:branches].join(' ')}}
