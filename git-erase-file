@@ -43,5 +43,9 @@ puts "Executing #{rm_cmd.inspect} for each commit" if options[:verbose]
 
 system cmd
 
-puts %{Backing up .git/refs/original to .git/refs/original-#{Time.now.strftime('%s')}}
-%x{mv .git/refs/original .git/refs/original-#{Time.now.strftime('%s')}}
+if File.exist? '.git/refs/original'
+  puts %{Backing up .git/refs/original to .git/refs/original-#{Time.now.strftime('%s')}}
+  %x{mv .git/refs/original .git/refs/original-#{Time.now.strftime('%s')}}
+else
+  puts '.git/refs/original does not exist, not performing backup.'
+end
