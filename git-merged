@@ -26,7 +26,7 @@ require 'optparse'
 # reference has been merged into that branch
 def merged?(symbolic, branch)
   sha1 = %x{git log -1 --pretty="format:%h" #{symbolic}}
-  contains = %x{git branch --contains #{sha1} | grep #{branch}}
+  contains = %x{git branch --contains #{sha1} | grep '\s#{branch}\s*$'}
   not contains.empty?
 end
 
